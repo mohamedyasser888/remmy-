@@ -32,6 +32,8 @@ export function ImageEmojiEditor({ onFileSelect, preview, error, disabled }: Ima
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const onFileSelectRef = useRef(onFileSelect);
+  const stickerRefs = useRef(new Map<number, HTMLDivElement>());
+  const stickersRef = useRef<Sticker[]>([]);
   const [source, setSource] = useState<string | null>(preview || null);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -43,6 +45,10 @@ export function ImageEmojiEditor({ onFileSelect, preview, error, disabled }: Ima
   useEffect(() => {
     onFileSelectRef.current = onFileSelect;
   }, [onFileSelect]);
+
+  useEffect(() => {
+    stickersRef.current = stickers;
+  }, [stickers]);
 
   useEffect(() => {
     if (preview && preview !== source) setSource(preview);
@@ -85,6 +91,17 @@ export function ImageEmojiEditor({ onFileSelect, preview, error, disabled }: Ima
     setStickers(items => items.map(item => item.id === id ? { ...item, ...update } : item));
   };
 
+  const updateStickerDuringGesture = (id: number, update: Partial<Sticker>) => {
+    const next = stickersRef.current.map(item => item.id === id ? { ...item, ...update } : item);
+    stickersRef.current = next;
+    const sticker = next.find(item => item.id === id);
+    const element = stickerRefs.current.get(id);
+    if (!sticker || !element) return;
+    element.style.left = `${sticker.x * 100}%`;
+    element.style.top = `${sticker.y * 100}%`;
+    element.style.transform = `translate(-50%, -50%) scale(${sticker.scale})`;
+  };
+
   const removeSelected = () => {
     if (selectedId === null) return;
     setStickers(items => items.filter(item => item.id !== selectedId));
@@ -109,7 +126,7 @@ export function ImageEmojiEditor({ onFileSelect, preview, error, disabled }: Ima
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (pointers.current.size === 2) {
       const points = Array.from(pointers.current.values());
-      const sticker = stickers.find(item => item.id === id);
+      const sticker = stickersRef.current.find(item => item.id === id);
       if (sticker) pinch.current = { distance: distance(points[0], points[1]), scale: sticker.scale, id };
     } else {
       setIsDragging(true);
@@ -123,14 +140,14 @@ export function ImageEmojiEditor({ onFileSelect, preview, error, disabled }: Ima
     const points = Array.from(pointers.current.values());
     if (points.length >= 2 && pinch.current) {
       const nextDistance = distance(points[0], points[1]);
-      updateSticker(pinch.current.id, { scale: Math.min(4, Math.max(0.5, pinch.current.scale * (nextDistance / pinch.current.distance))) });
+      updateStickerDuringGesture(pinch.current.id, { scale: Math.min(4, Math.max(0.5, pinch.current.scale * (nextDistance / pinch.current.distance))) });
       return;
     }
     if (!isDragging) return;
     const rect = editorRef.current.getBoundingClientRect();
-    const sticker = stickers.find(item => item.id === selectedId);
+    const sticker = stickersRef.current.find(item => item.id === selectedId);
     if (!sticker) return;
-    updateSticker(selectedId, {
+    updateStickerDuringGesture(selectedId, {
       x: Math.min(1, Math.max(0, sticker.x + (event.clientX - point.x) / rect.width)),
       y: Math.min(1, Math.max(0, sticker.y + (event.clientY - point.y) / rect.height)),
     });
@@ -140,7 +157,10 @@ export function ImageEmojiEditor({ onFileSelect, preview, error, disabled }: Ima
   const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
     pointers.current.delete(event.pointerId);
     if (pointers.current.size < 2) pinch.current = null;
-    if (pointers.current.size === 0) setIsDragging(false);
+    if (pointers.current.size === 0) {
+      setIsDragging(false);
+      setStickers(stickersRef.current);
+    }
   };
 
   useEffect(() => {
@@ -192,6 +212,10 @@ export function ImageEmojiEditor({ onFileSelect, preview, error, disabled }: Ima
                 key={sticker.id}
                 onPointerDown={event => handlePointerDown(event, sticker.id)}
                 onClick={() => setSelectedId(sticker.id)}
+                ref={element => {
+                  if (element) stickerRefs.current.set(sticker.id, element);
+                  else stickerRefs.current.delete(sticker.id);
+                }}
                 className={`absolute select-none text-[3.5rem] leading-none ${selectedId === sticker.id ? 'rounded-lg ring-2 ring-primary-400 ring-offset-2' : ''}`}
                 style={{ left: `${sticker.x * 100}%`, top: `${sticker.y * 100}%`, transform: `translate(-50%, -50%) scale(${sticker.scale})`, transformOrigin: 'center', cursor: isDragging && selectedId === sticker.id ? 'grabbing' : 'grab' }}
               >
