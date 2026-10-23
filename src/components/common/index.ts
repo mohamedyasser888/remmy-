@@ -14,6 +14,7 @@ export { HeartButton } from './HeartButton';
 export { FilterChips } from './FilterChips';
 export { Loader, SkeletonCard, SkeletonGrid } from './Loader';
 export { FileUpload } from './FileUpload';
+export { ImageEmojiEditor } from './ImageEmojiEditor';
 export { LanguageSwitcher } from './LanguageSwitcher';
 export { ErrorBoundary } from './ErrorBoundary';
 export { AnimatedBackground } from './AnimatedBackground';

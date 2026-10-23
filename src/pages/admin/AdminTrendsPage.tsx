@@ -3,11 +3,11 @@
  * Admin can add and delete trend items
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getTrendItems, createTrendItem, deleteTrendItem, type TrendItem } from '@/services/admin';
 import { getImageUrl } from '@/services/storage';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader, Card, Button, Input, FilterChips } from '@/components/common';
+import { Loader, Card, Button, Input, FilterChips, ImageEmojiEditor } from '@/components/common';
 import { StarRating } from '@/components/common';
 import { ALL_CATEGORIES, categoryRequiresSize } from '@/utils/constants';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
@@ -19,7 +19,6 @@ export function AdminTrendsPage() {
   const [saving, setSaving]   = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const fileRef               = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -43,14 +42,6 @@ export function AdminTrendsPage() {
     setLoading(false);
   }
 
-  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setForm(f => ({ ...f, image: file, preview: reader.result as string }));
-    reader.readAsDataURL(file);
-  }
-
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name || !form.image || !user) return;
@@ -66,7 +57,6 @@ export function AdminTrendsPage() {
     if (item) setItems(prev => [item, ...prev]);
     if (error) alert('Failed to add trend: ' + error.message);
     setForm({ name: '', category: ALL_CATEGORIES[0], size: '', description: '', rating: 0, image: null, preview: '' });
-    if (fileRef.current) fileRef.current.value = '';
     setSaving(false);
   }
 
@@ -137,19 +127,13 @@ export function AdminTrendsPage() {
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-slate-700 mb-1">Image *</label>
-            <div className="flex items-center gap-4">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFile}
-                className="text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-600 hover:file:bg-primary-100"
-                required
-              />
-              {form.preview && (
-                <img src={form.preview} alt="preview" className="w-16 h-16 rounded-lg object-cover border" />
-              )}
-            </div>
+            <ImageEmojiEditor
+              preview={form.preview || null}
+              onFileSelect={file => setForm(f => f.image
+                ? { ...f, image: file }
+                : { ...f, image: file, preview: URL.createObjectURL(file) })}
+              disabled={saving}
+            />
           </div>
           <div className="md:col-span-2">
             <Button type="submit" disabled={saving || !form.name || !form.image}>

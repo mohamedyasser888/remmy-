@@ -11,7 +11,7 @@ import {
   type Partner, type PartnerPost
 } from '@/services/partners';
 import { getImageUrl } from '@/services/storage';
-import { Loader, Card, Button, Input, StarRating, FilterChips } from '@/components/common';
+import { Loader, Card, Button, Input, StarRating, FilterChips, ImageEmojiEditor } from '@/components/common';
 import { ALL_CATEGORIES, categoryRequiresSize } from '@/utils/constants';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
@@ -31,7 +31,6 @@ export function AdminPartnersPage() {
   // Post form
   const [postForm, setPostForm] = useState({ name: '', category: ALL_CATEGORIES[0] as string, size: '', description: '', rating: 0, image: null as File | null, preview: '' });
   const [savingPost, setSavingPost] = useState(false);
-  const postFileRef = useRef<HTMLInputElement>(null);
 
   const selectedRef = useRef<Partner | null>(null);
   selectedRef.current = selected;
@@ -112,7 +111,6 @@ export function AdminPartnersPage() {
     if (post) setPosts(prev => [post, ...prev]);
     if (error) alert('Failed: ' + error.message);
     setPostForm({ name: '', category: ALL_CATEGORIES[0], size: '', description: '', rating: 0, image: null, preview: '' });
-    if (postFileRef.current) postFileRef.current.value = '';
     setSavingPost(false);
   }
 
@@ -175,21 +173,13 @@ export function AdminPartnersPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Image *</label>
-              <div className="flex items-center gap-3">
-                <input
-                  ref={postFileRef}
-                  type="file" accept="image/*"
-                  onChange={e => {
-                    const file = e.target.files?.[0]; if (!file) return;
-                    const reader = new FileReader();
-                    reader.onloadend = () => setPostForm(f => ({ ...f, image: file, preview: reader.result as string }));
-                    reader.readAsDataURL(file);
-                  }}
-                  className="text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-600 hover:file:bg-primary-100"
-                  required
-                />
-                {postForm.preview && <img src={postForm.preview} alt="preview" className="w-12 h-12 rounded-lg object-cover border" />}
-              </div>
+              <ImageEmojiEditor
+                preview={postForm.preview || null}
+                onFileSelect={file => setPostForm(f => f.image
+                  ? { ...f, image: file }
+                  : { ...f, image: file, preview: URL.createObjectURL(file) })}
+                disabled={savingPost}
+              />
             </div>
             <div className="md:col-span-2">
               <Button type="submit" disabled={savingPost || !postForm.name || !postForm.image}>
