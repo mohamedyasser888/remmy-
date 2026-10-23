@@ -53,7 +53,7 @@ export function FilterChips<T extends string>({
         <span aria-hidden="true">‹</span>
       </button>
 
-      <div className="grid min-w-0 flex-1 grid-cols-5 items-center gap-1">
+      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
       {visibleOptions.map((option, index) => {
         const isSelected = selected === option;
         
@@ -61,8 +61,9 @@ export function FilterChips<T extends string>({
           <button
             key={option}
             onClick={() => onChange(option)}
+            title={getLabel(option)}
             style={{ animationDelay: `${index * 45}ms` }}
-            className={`animate-slide-up min-w-0 rounded-full px-2 py-1.5 text-xs font-medium transition-all duration-200
+            className={`animate-slide-up min-w-0 flex-1 rounded-full px-1 py-1.5 text-xs font-medium transition-all duration-200 sm:px-2
               ${
                 isSelected
                   ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20 ring-2 ring-primary-200 ring-offset-1'
@@ -71,7 +72,7 @@ export function FilterChips<T extends string>({
             `}
             aria-pressed={isSelected}
           >
-            <span className="block whitespace-nowrap text-center">{getLabel(option)}</span>
+            <span className="block truncate whitespace-nowrap text-center">{getLabel(option)}</span>
           </button>
         );
       })}

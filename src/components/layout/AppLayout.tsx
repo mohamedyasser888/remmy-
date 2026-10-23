@@ -16,9 +16,9 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   return (
-    <div className="app-shell bg-neutral-50 flex">
+    <div className="app-shell flex min-h-screen min-w-0 bg-neutral-50">
       <SideNav />
-      <main className="app-main flex-1 flex flex-col">
+      <main className="app-main flex min-w-0 flex-1 flex-col">
         {children || <Outlet />}
       </main>
       <BottomNav />

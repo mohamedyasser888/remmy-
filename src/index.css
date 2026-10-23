@@ -104,6 +104,29 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* On phones the post card is content-driven. A fixed nested scroller makes
+     long cards trap touch scrolling and hides actions below the viewport. */
+  @media (max-width: 767px) {
+    .vertical-snap-feed {
+      height: auto;
+      min-height: 0;
+      overflow: visible;
+      scroll-snap-type: none;
+      overscroll-behavior-y: auto;
+    }
+
+    .vertical-snap-item {
+      min-height: 0;
+      padding: 0 0 1rem;
+      scroll-snap-align: none;
+      scroll-snap-stop: normal;
+    }
+
+    .vertical-snap-item > * {
+      width: 100%;
+    }
+  }
+
   .vertical-snap-feed::-webkit-scrollbar {
     display: none;
   }
@@ -242,11 +265,12 @@
 
   .app-main {
     min-height: 100vh;
+    min-width: 0;
   }
 
   @media (max-width: 1023px) {
     .app-main {
-      padding-bottom: 4rem;
+      padding-bottom: calc(4rem + env(safe-area-inset-bottom));
     }
   }
 
